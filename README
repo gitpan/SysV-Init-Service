@@ -49,12 +49,9 @@ ERRORS
      new():
              Parameter 'service' is required.
              Service '%s' doesn't present.
+             Service with .sh suffix doesn't possible.
              From Class::Utils::set_params():
                      Unknown parameter '%s'.
-
-     commands():
-             Problem with run service '%s'.
-                     STDERR: %s
 
      start():
              Problem with service '%s' start.
@@ -135,5 +132,5 @@ LICENSE AND COPYRIGHT
     BSD license.
 
 VERSION
-    0.01
+    0.02
 

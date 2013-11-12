@@ -13,7 +13,7 @@ use IO::CaptureOutput qw(capture_exec);
 use List::MoreUtils qw(any);
 
 # Version.
-our $VERSION = 0.01;
+our $VERSION = 0.02;
 
 # Construct.
 sub new {
@@ -35,6 +35,9 @@ sub new {
 	if (! defined $self->{'service'}) {
 		err "Parameter 'service' is required.";
 	}
+	if ($self->{'service'} =~ m/\.sh$/ms) {
+		err "Service with .sh suffix doesn't possible.";
+	}
 	$self->{'_service_path'} = catfile($self->{'service_dir'},
 		$self->{'service'});
 	if (! -x $self->{'_service_path'}) {
@@ -50,18 +53,15 @@ sub commands {
 	my $self = shift;
 	my ($stdout, $stderr, $success, $exit_code)
 		= capture_exec($self->{'_service_path'});
-	if ($exit_code > 0) {
-		my @err;
-		if ($stderr) {
-			push @err, 'STDERR', $stderr;
-		}
-		err "Problem with run service '$self->{'service'}'.", @err;
+	if ($stderr) {
+		$stdout .= $stderr;
 	}
-	my $commands;
+	my @commands;
 	if ($stdout =~ m/{([\w\|\-]+)}/ms) {
-		$commands = $1;
+		@commands = split m/\|/ms, $1;
+	} elsif ($stdout =~ m/([\w\-]+)\s*$/ms) {
+		@commands = $1;
 	}
-	my @commands = split m/\|/ms, $commands;
 	return sort @commands;
 }
 
@@ -197,12 +197,9 @@ Constructor.
  new():
          Parameter 'service' is required.
          Service '%s' doesn't present.
+         Service with .sh suffix doesn't possible.
          From Class::Utils::set_params():
                  Unknown parameter '%s'.
-
- commands():
-         Problem with run service '%s'.
-                 STDERR: %s
 
  start():
          Problem with service '%s' start.
@@ -294,6 +291,6 @@ BSD license.
 
 =head1 VERSION
 
-0.01
+0.02
 
 =cut
