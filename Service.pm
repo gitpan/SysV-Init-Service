@@ -13,7 +13,7 @@ use IO::CaptureOutput qw(capture_exec);
 use List::MoreUtils qw(any);
 
 # Version.
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 # Construct.
 sub new {
@@ -74,50 +74,37 @@ sub name {
 # Start service.
 sub start {
 	my $self = shift;
-	my ($stdout, $stderr, $success, $exit_code) = (undef, undef, undef, 1);
-	if (any { $_ eq 'start'} $self->commands) {
-		($stdout, $stderr, $success, $exit_code)
-			= capture_exec($self->{'_service_path'}.' start');
-		if ($stderr) {
-			chomp $stderr;
-			err "Problem with service '$self->{'service'}' start.",
-				'STDERR', $stderr;
-		}
-	} else {
-		err "Service hasn't start command.";
-	}
-	return $exit_code;
+	return $self->_command('start');
 }
 
 # Get status.
 sub status {
 	my $self = shift;
-	my ($stdout, $stderr, $success, $exit_code) = (undef, undef, undef, 1);
-	if (any { $_ eq 'status'} $self->commands) {
-		($stdout, $stderr, $success, $exit_code)
-			= capture_exec($self->{'_service_path'}.' status');
-	} else {
-		err "Service hasn't status command.";
-	}
-	return $exit_code;
+	return $self->_command('status');
 }
 
 # Stop service.
 sub stop {
 	my $self = shift;
-	my ($stdout, $stderr, $success, $exit_code) = (undef, undef, undef, 1);
-	if (any { $_ eq 'stop'} $self->commands) {
+	return $self->_command('stop');
+}
+
+# Common command.
+sub _service_command {
+	my ($self, $command) = @_;
+	my ($stdout, $stderr, $success, $exit_code);
+	if (any { $_ eq $command } $self->commands) {
 		($stdout, $stderr, $success, $exit_code)
-			= capture_exec($self->{'_service_path'}.' stop');
+			= capture_exec($self->{'_service_path'}.' '.$command);
 		if ($stderr) {
 			chomp $stderr;
-			err "Problem with service '$self->{'service'}' stop.",
+			err "Problem with service '$self->{'service'}' $command.",
 				'STDERR', $stderr;
 		}
 	} else {
-		err "Service hasn't stop command.";
+		err "Service hasn't $command command.";
 	}
-	return $exit_code;
+	return $exit_code >> 8;
 }
 
 1;
@@ -207,6 +194,8 @@ Constructor.
          Service hasn't start command.
 
  status():
+         Problem with service '%s' status.
+                 STDERR: %s
          Service hasn't status command.
 
  stop():
@@ -291,6 +280,6 @@ BSD license.
 
 =head1 VERSION
 
-0.02
+0.03
 
 =cut
